@@ -8,7 +8,8 @@ class FrameViewModel: ObservableObject {
     @Published var previewImage: NSImage?
     @Published var errorMessage: String?
     @Published var isProcessing = false
-    @Published var barRatio: Double = 0.35
+    @Published var barColor: Color = .white
+    @Published var textColor: Color = Color(white: 0.30)
 
     func processImage(url: URL) {
         isProcessing = true
@@ -16,10 +17,7 @@ class FrameViewModel: ObservableObject {
         do {
             let info = try ImageLoader.load(from: url)
             photoInfo = info
-            calculator = FrameCalculator(photoInfo: info, barRatio: barRatio)
-            if let calc = calculator {
-                previewImage = FrameRenderer.render(photoInfo: info, calculator: calc)
-            }
+            refreshPreview()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -28,9 +26,14 @@ class FrameViewModel: ObservableObject {
 
     func refreshPreview() {
         guard let info = photoInfo else { return }
-        calculator = FrameCalculator(photoInfo: info, barRatio: barRatio)
+        calculator = FrameCalculator(photoInfo: info)
         if let calc = calculator {
-            previewImage = FrameRenderer.render(photoInfo: info, calculator: calc)
+            previewImage = FrameRenderer.render(
+                photoInfo: info,
+                calculator: calc,
+                barColor: NSColor(barColor),
+                textColor: NSColor(textColor)
+            )
         }
     }
 

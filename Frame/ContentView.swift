@@ -8,23 +8,42 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let preview = vm.previewImage {
-                PreviewView(image: preview)
+                HStack(spacing: 0) {
+                    // 左侧：预览区
+                    PreviewView(image: preview)
 
-                HStack {
-                    Text("底栏比例: \(String(format: "%.0f", vm.barRatio * 100))%")
-                    Slider(value: $vm.barRatio, in: 0.10...0.60, step: 0.025)
-                        .frame(width: 200)
-                        .onChange(of: vm.barRatio) { _, _ in vm.refreshPreview() }
+                    // 右侧：编辑区
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("编辑")
+                            .font(.headline)
 
-                    Spacer()
+                        Divider()
 
-                    ExportButton(action: { isExporting = true })
+                        ColorPicker("底部颜色", selection: $vm.barColor)
+                            .onChange(of: vm.barColor) { _, _ in vm.refreshPreview() }
+
+                        ColorPicker("文字颜色", selection: $vm.textColor)
+                            .onChange(of: vm.textColor) { _, _ in vm.refreshPreview() }
+
+                        Divider()
+
+                        Text("底栏高度：\(String(format: "%.0f", FrameCalculator.barRatio * 100))%")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Spacer()
+
+                        ExportButton(action: { isExporting = true })
+                    }
+                    .frame(width: 220)
+                    .padding()
                 }
-                .padding()
             } else {
+                // 空状态 — 拖放区
                 DropZoneView(onImageDropped: { url in vm.processImage(url: url) })
             }
 
+            // 加载状态 & 错误提示
             if vm.isProcessing {
                 ProgressView("正在处理…")
                     .scaleEffect(1.2)
@@ -41,7 +60,7 @@ struct ContentView: View {
                 .padding()
             }
         }
-        .frame(minWidth: 600, minHeight: 500)
+        .frame(minWidth: 800, minHeight: 500)
         .fileExporter(
             isPresented: $isExporting,
             document: vm.previewImage.flatMap { ImageFileDocument(image: $0) },

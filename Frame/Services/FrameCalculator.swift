@@ -1,6 +1,8 @@
 import AppKit
 
 struct FrameCalculator {
+    static let barRatio: CGFloat = 0.12
+
     let barHeight: CGFloat
     let canvasSize: CGSize
     let photoRect: CGRect
@@ -8,11 +10,11 @@ struct FrameCalculator {
     let fontSize: CGFloat
     let textDrawingOrigin: CGPoint
 
-    init(photoInfo: PhotoInfo, barRatio: CGFloat = 0.35) {
+    init(photoInfo: PhotoInfo) {
         let imageWidth = photoInfo.pixelSize.width
         let imageHeight = photoInfo.pixelSize.height
 
-        self.barHeight = imageHeight * barRatio
+        self.barHeight = imageHeight * Self.barRatio
         self.canvasSize = CGSize(
             width: imageWidth,
             height: imageHeight + barHeight
@@ -38,7 +40,6 @@ struct FrameCalculator {
             maxTextWidth: maxTextWidth
         )
 
-        // 文字在底部栏中垂直居中
         if !exifText.isEmpty {
             let font = NSFont(name: "Helvetica Neue", size: fontSize)
                 ?? NSFont.systemFont(ofSize: fontSize)
