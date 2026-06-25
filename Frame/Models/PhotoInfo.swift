@@ -13,29 +13,36 @@ struct PhotoInfo {
     let shutterSpeed: String?       // "1/125"
     let iso: String?                // "ISO 100"
 
-    // 缩放生成预览用的缩略版本
+    // 缩放生成预览用的缩略版本（CGContext 直接缩放，避免 NSImage.cgImage 不可靠）
     func scaledToFit(maxDimension: CGFloat) -> PhotoInfo {
         let longerSide = max(pixelSize.width, pixelSize.height)
         guard longerSide > maxDimension else { return self }
         let scale = maxDimension / longerSide
-        let newWidth = pixelSize.width * scale
-        let newHeight = pixelSize.height * scale
-        let newSize = NSSize(width: newWidth, height: newHeight)
+        let newWidth = Int(pixelSize.width * scale)
+        let newHeight = Int(pixelSize.height * scale)
+        let newSize = CGSize(width: newWidth, height: newHeight)
 
-        let resized = NSImage(size: newSize)
-        resized.lockFocus()
-        NSGraphicsContext.current?.imageInterpolation = .high
-        image.draw(in: NSRect(origin: .zero, size: newSize))
-        resized.unlockFocus()
+        guard let context = CGContext(
+            data: nil,
+            width: newWidth,
+            height: newHeight,
+            bitsPerComponent: cgImage.bitsPerComponent,
+            bytesPerRow: 0,
+            space: cgImage.colorSpace ?? CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: cgImage.bitmapInfo.rawValue
+        ) else { return self }
 
-        guard let cgImage = resized.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            return self
-        }
+        context.interpolationQuality = .high
+        context.draw(cgImage, in: CGRect(origin: .zero, size: newSize))
+
+        guard let scaledCGImage = context.makeImage() else { return self }
+
+        let scaledImage = NSImage(cgImage: scaledCGImage, size: newSize)
 
         return PhotoInfo(
-            image: resized,
-            cgImage: cgImage,
-            pixelSize: CGSize(width: newWidth, height: newHeight),
+            image: scaledImage,
+            cgImage: scaledCGImage,
+            pixelSize: newSize,
             sourceURL: sourceURL,
             cameraModel: cameraModel,
             focalLength: focalLength,
