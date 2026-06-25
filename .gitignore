@@ -1,0 +1,15 @@
+# Xcode
+xcuserdata/
+*.xcworkspace/xcuserdata
+DerivedData/
+build/
+
+# Swift Package Manager
+.swiftpm/
+
+# System
+.DS_Store
+Thumbs.db
+
+# PilotDeck
+.pilotdeck/
