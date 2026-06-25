@@ -8,15 +8,13 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let preview = vm.previewImage {
-                // 预览区
                 PreviewView(image: preview)
 
-                // 设置栏
                 HStack {
-                    Text("边框比例: \(String(format: "%.1f", vm.borderRatio * 100))%")
-                    Slider(value: $vm.borderRatio, in: 0.02...0.08, step: 0.005)
+                    Text("底栏比例: \(String(format: "%.0f", vm.barRatio * 100))%")
+                    Slider(value: $vm.barRatio, in: 0.10...0.60, step: 0.025)
                         .frame(width: 200)
-                        .onChange(of: vm.borderRatio) { _, _ in vm.refreshPreview() }
+                        .onChange(of: vm.barRatio) { _, _ in vm.refreshPreview() }
 
                     Spacer()
 
@@ -24,11 +22,9 @@ struct ContentView: View {
                 }
                 .padding()
             } else {
-                // 空状态 — 拖放区
                 DropZoneView(onImageDropped: { url in vm.processImage(url: url) })
             }
 
-            // 加载状态 & 错误提示
             if vm.isProcessing {
                 ProgressView("正在处理…")
                     .scaleEffect(1.2)
@@ -60,4 +56,8 @@ struct ContentView: View {
             }
         }
     }
+}
+
+#Preview {
+    ContentView()
 }

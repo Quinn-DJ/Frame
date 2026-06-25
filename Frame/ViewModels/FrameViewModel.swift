@@ -8,7 +8,7 @@ class FrameViewModel: ObservableObject {
     @Published var previewImage: NSImage?
     @Published var errorMessage: String?
     @Published var isProcessing = false
-    @Published var borderRatio: Double = 0.04
+    @Published var barRatio: Double = 0.35
 
     func processImage(url: URL) {
         isProcessing = true
@@ -16,7 +16,7 @@ class FrameViewModel: ObservableObject {
         do {
             let info = try ImageLoader.load(from: url)
             photoInfo = info
-            calculator = FrameCalculator(photoInfo: info, borderRatio: borderRatio)
+            calculator = FrameCalculator(photoInfo: info, barRatio: barRatio)
             if let calc = calculator {
                 previewImage = FrameRenderer.render(photoInfo: info, calculator: calc)
             }
@@ -28,7 +28,7 @@ class FrameViewModel: ObservableObject {
 
     func refreshPreview() {
         guard let info = photoInfo else { return }
-        calculator = FrameCalculator(photoInfo: info, borderRatio: borderRatio)
+        calculator = FrameCalculator(photoInfo: info, barRatio: barRatio)
         if let calc = calculator {
             previewImage = FrameRenderer.render(photoInfo: info, calculator: calc)
         }

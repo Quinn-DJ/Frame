@@ -1,88 +1,72 @@
 import AppKit
 
 struct FrameCalculator {
-    let borderWidth: CGFloat
+    let barHeight: CGFloat
     let canvasSize: CGSize
-    let photoRect: CGRect          // 图片在画布中的位置
-    let strokeRect: CGRect         // 细黑描边位置
-    let separatorY: CGFloat        // 分隔线 Y 坐标
-    let fontSize: CGFloat          // 文字字号
-    let textDrawingOrigin: CGPoint // 文字绘制起点
+    let photoRect: CGRect
+    let barRect: CGRect
+    let fontSize: CGFloat
+    let textDrawingOrigin: CGPoint
 
-    init(photoInfo: PhotoInfo, borderRatio: CGFloat = 0.04) {
-        self.borderWidth = Self.autoBorderWidth(
-            imageWidth: photoInfo.pixelSize.width,
-            imageHeight: photoInfo.pixelSize.height,
-            ratio: borderRatio
-        )
+    init(photoInfo: PhotoInfo, barRatio: CGFloat = 0.35) {
+        let imageWidth = photoInfo.pixelSize.width
+        let imageHeight = photoInfo.pixelSize.height
+
+        self.barHeight = imageHeight * barRatio
         self.canvasSize = CGSize(
-            width: photoInfo.pixelSize.width + 2 * borderWidth,
-            height: photoInfo.pixelSize.height + 2 * borderWidth
+            width: imageWidth,
+            height: imageHeight + barHeight
         )
         self.photoRect = CGRect(
-            x: borderWidth,
-            y: borderWidth,
-            width: photoInfo.pixelSize.width,
-            height: photoInfo.pixelSize.height
+            x: 0,
+            y: barHeight,
+            width: imageWidth,
+            height: imageHeight
         )
-        self.strokeRect = photoRect.insetBy(dx: -1, dy: -1)
+        self.barRect = CGRect(
+            x: 0,
+            y: 0,
+            width: imageWidth,
+            height: barHeight
+        )
 
-        let maxTextWidth = canvasSize.width - borderWidth * 0.3
+        let maxTextWidth = imageWidth * 0.85
         let exifText = photoInfo.exifSummaryLine
         self.fontSize = Self.calculateFontSize(
             text: exifText,
-            borderWidth: borderWidth,
+            barHeight: barHeight,
             maxTextWidth: maxTextWidth
         )
 
-        // 文字在底部边框垂直居中
-        let textZoneY = photoInfo.pixelSize.height + borderWidth
-        let textZoneHeight = borderWidth
-        let font = NSFont(name: "Helvetica Neue", size: fontSize)
-            ?? NSFont.systemFont(ofSize: fontSize)
-        let lineHeight = font.ascender + abs(font.descender) + font.leading
-        let textOriginY = textZoneY + (textZoneHeight - lineHeight) / 2 + font.ascender
-        self.textDrawingOrigin = CGPoint(
-            x: borderWidth * 0.15 + borderWidth,
-            y: textOriginY
-        )
-
-        self.separatorY = photoRect.maxY + borderWidth * 0.3
-    }
-
-    // MARK: - 自动边框宽度
-
-    /// 根据图片尺寸自动计算边框宽度
-    static func autoBorderWidth(
-        imageWidth: CGFloat,
-        imageHeight: CGFloat,
-        ratio: CGFloat = 0.04
-    ) -> CGFloat {
-        let baseSide = min(imageWidth, imageHeight)
-        let minBorder: CGFloat = 40
-        let maxBorder: CGFloat = baseSide * 0.08
-        let raw = baseSide * ratio
-        return max(minBorder, min(raw, maxBorder))
+        // 文字在底部栏中垂直居中
+        if !exifText.isEmpty {
+            let font = NSFont(name: "Helvetica Neue", size: fontSize)
+                ?? NSFont.systemFont(ofSize: fontSize)
+            let lineHeight = font.ascender + abs(font.descender) + font.leading
+            let textY = barHeight / 2 - lineHeight / 2 + font.ascender
+            self.textDrawingOrigin = CGPoint(x: imageWidth * 0.075, y: textY)
+        } else {
+            self.textDrawingOrigin = .zero
+        }
     }
 
     // MARK: - 文字自适应字号
 
-    /// 计算 EXIF 文字的自适应字号
     static func calculateFontSize(
         text: String,
-        borderWidth: CGFloat,
+        barHeight: CGFloat,
         maxTextWidth: CGFloat,
         fontName: String = "Helvetica Neue"
     ) -> CGFloat {
         guard !text.isEmpty else { return 12 }
 
-        let baseFontSize = borderWidth * 0.28
+        let baseFontSize = barHeight * 0.25
         let baseFont = NSFont(name: fontName, size: baseFontSize) ?? NSFont.systemFont(ofSize: baseFontSize)
         let attributes: [NSAttributedString.Key: Any] = [.font: baseFont]
         let textWidth = (text as NSString).size(withAttributes: attributes).width
 
-        let minFontSize: CGFloat = 8.0
-        let maxFontSize: CGFloat = borderWidth * 0.4
+        let minFontSize: CGFloat = 10.0
+        let maxFontSize: CGFloat = barHeight * 0.45
 
         if textWidth > maxTextWidth {
             let scale = maxTextWidth / textWidth
