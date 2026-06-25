@@ -11,6 +11,8 @@ class FrameViewModel: ObservableObject {
     @Published var barColor: Color = .white
     @Published var textColor: Color = Color(white: 0.30)
 
+    static let maxPreviewDimension: CGFloat = 1200
+
     func processImage(url: URL) {
         isProcessing = true
         errorMessage = nil
@@ -26,10 +28,14 @@ class FrameViewModel: ObservableObject {
 
     func refreshPreview() {
         guard let info = photoInfo else { return }
-        calculator = FrameCalculator(photoInfo: info)
+
+        // 缩略渲染 — 避免全尺寸 CPU 重绘卡顿
+        let previewInfo = info.scaledToFit(maxDimension: Self.maxPreviewDimension)
+
+        calculator = FrameCalculator(photoInfo: previewInfo)
         if let calc = calculator {
             previewImage = FrameRenderer.render(
-                photoInfo: info,
+                photoInfo: previewInfo,
                 calculator: calc,
                 barColor: NSColor(barColor),
                 textColor: NSColor(textColor)
@@ -44,8 +50,15 @@ class FrameViewModel: ObservableObject {
     }
 
     func export(to url: URL) {
-        guard let image = previewImage,
-              let tiffData = image.tiffRepresentation,
+        guard let info = photoInfo else { return }
+        let calc = FrameCalculator(photoInfo: info)
+        let fullImage = FrameRenderer.render(
+            photoInfo: info,
+            calculator: calc,
+            barColor: NSColor(barColor),
+            textColor: NSColor(textColor)
+        )
+        guard let tiffData = fullImage.tiffRepresentation,
               let bitmap = NSBitmapImageRep(data: tiffData),
               let jpegData = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.95])
         else { return }
